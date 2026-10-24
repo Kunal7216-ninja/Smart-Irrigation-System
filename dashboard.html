@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Farm Dashboard</title>
+    <style>
+        /* Base Styles */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f4f7f6; padding: 20px; color: #2d3748; margin: 0; }
+        h1 { color: #2c7a7b; margin-bottom: 5px; font-size: 28px; }
+        .subtitle { font-size: 14px; color: #718096; margin-bottom: 30px; }
+        
+        /* Container Setup */
+        .container { max-width: 650px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: #2b6cb0; font-size: 22px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; }
+        
+        /* Screen Toggling Logic */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Front Menu Selection Cards */
+        .menu-grid { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .menu-card { 
+            flex: 1; min-width: 250px; padding: 30px 20px; border-radius: 10px; cursor: pointer; 
+            border: 2px solid transparent; transition: all 0.3s ease; 
+        }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-live { background-color: #ebf8fa; border-color: #319795; }
+        .card-manual { background-color: #fffaf0; border-color: #dd6b20; }
+        .menu-card h3 { margin: 0 0 10px 0; font-size: 20px; }
+        .card-live h3 { color: #2c7a7b; }
+        .card-manual h3 { color: #c05621; }
+
+        /* Shared UI Elements */
+        .slider-group { margin: 25px 0; text-align: left; }
+        .slider-group label { font-weight: bold; color: #4a5568; }
+        input[type="range"] { width: 100%; margin-top: 10px; }
+        button { background-color: #38a169; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #2f855a; }
+        .btn-back { background-color: #a0aec0; margin-bottom: 20px; font-size: 14px; padding: 8px 16px; }
+        .btn-back:hover { background-color: #718096; }
+        .result-box { margin-top: 20px; font-weight: bold; font-size: 18px; padding: 15px; border-radius: 8px; background-color: #e2e8f0; color: #1a202c; border: 1px solid #cbd5e0; }
+        
+        /* Live Data Grid */
+        .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0; }
+        .data-card { background: #edf2f7; padding: 20px 10px; border-radius: 8px; border: 1px solid #cbd5e0; }
+        .data-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #4a5568; text-transform: uppercase; }
+        .data-card p { margin: 0; font-size: 24px; font-weight: bold; color: #2d3748; }
+    </style>
+</head>
+<body>
+
+    <h1>🌱 Smart Farm OS</h1>
+    <p class="subtitle">AI-Powered Irrigation Management System</p>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: THE MAIN MENU -->
+    <!-- ========================================== -->
+    <div id="screen-home" class="container screen active">
+        <h2>Select Operating Mode</h2>
+        <p style="color: #718096;">Choose how you want to interact with the system.</p>
+        
+        <div class="menu-grid">
+            <!-- Live Mode Card -->
+            <div class="menu-card card-live" onclick="openScreen('screen-live')">
+                <h3>📡 Live Hardware Mode</h3>
+                <p style="color: #4a5568; font-size: 14px;">Monitor real-time data from the ESP32 sensors and view current pump status.</p>
+            </div>
+            
+            <!-- Manual Mode Card -->
+            <div class="menu-card card-manual" onclick="openScreen('screen-manual')">
+                <h3>💻 Manual Override Mode</h3>
+                <p style="color: #4a5568; font-size: 14px;">Input custom environmental data to test the AI prediction model safely.</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SCREEN 2: LIVE HARDWARE DASHBOARD -->
+    <!-- ========================================== -->
+    <div id="screen-live" class="container screen">
+        <button class="btn-back" onclick="openScreen('screen-home')">← Back to Menu</button>
+        
+        <h2>📡 Live Hardware Status</h2>
+        <p style="font-size: 12px; color: #319795;">🟢 Auto-refreshing every 3 seconds...</p>
+        
+        <div class="data-grid">
+            <div class="data-card">
+                <h3>Temperature</h3>
+                <p id="live-temp">-- °C</p>
+            </div>
+            <div class="data-card">
+                <h3>Humidity</h3>
+                <p id="live-hum">-- %</p>
+            </div>
+            <div class="data-card">
+                <h3>Moisture</h3>
+                <p id="live-moist">-- %</p>
+            </div>
+        </div>
+
+        <button onclick="fetchLiveHardwareData()" style="background-color: #319795;">🔄 Refresh Now</button>
+        <div id="live-result" class="result-box">Waiting for connection...</div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: MANUAL AI TESTING -->
+    <!-- ========================================== -->
+    <div id="screen-manual" class="container screen">
+        <button class="btn-back" onclick="openScreen('screen-home')">← Back to Menu</button>
+        
+        <h2 style="color: #dd6b20; border-bottom-color: #feebc8;">💻 Manual AI Testing</h2>
+
+        <div class="slider-group">
+            <label>Temperature: <span id="tempVal" style="color: #dd6b20;">30</span> °C</label>
+            <input type="range" id="temp" min="0" max="50" value="30" oninput="document.getElementById('tempVal').innerText = this.value">
+        </div>
+        
+        <div class="slider-group">
+            <label>Humidity: <span id="humVal" style="color: #dd6b20;">50</span> %</label>
+            <input type="range" id="hum" min="0" max="100" value="50" oninput="document.getElementById('humVal').innerText = this.value">
+        </div>
+        
+        <div class="slider-group">
+            <label>Soil Moisture: <span id="moistVal" style="color: #dd6b20;">40</span> %</label>
+            <input type="range" id="moist" min="0" max="100" value="40" oninput="document.getElementById('moistVal').innerText = this.value">
+        </div>
+
+        <button onclick="askAI()" style="background-color: #dd6b20;">🧠 Run AI Prediction</button>
+        <div id="manual-result" class="result-box">Adjust sliders and run prediction.</div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SYSTEM LOGIC (JavaScript) -->
+    <!-- ========================================== -->
+    <script>
+        let liveRefreshInterval; // Variable to store our timer
+
+        // --- UI NAVIGATION LOGIC ---
+        function openScreen(targetScreenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            // Show the target screen
+            document.getElementById(targetScreenId).classList.add('active');
+
+            // Stop auto-refreshing if we leave the live screen
+            if (liveRefreshInterval) {
+                clearInterval(liveRefreshInterval);
+            }
+
+            // If user opens the live screen, fetch immediately, then start a timer to fetch every 3 seconds
+            if (targetScreenId === 'screen-live') {
+                document.getElementById('live-result').innerText = "Fetching latest data...";
+                fetchLiveHardwareData();
+                
+                // Auto-refresh every 3000 milliseconds (3 seconds)
+                liveRefreshInterval = setInterval(fetchLiveHardwareData, 3000);
+            }
+        }
+
+        // --- FETCH LIVE DATA FUNCTION ---
+        async function fetchLiveHardwareData() {
+            try {
+                let response = await fetch('http://127.0.0.1:5000/live-status');
+                let result = await response.json();
+                
+                let resDiv = document.getElementById('live-result');
+
+                if (result.status === 'success') {
+                    let data = result.data;
+                    
+                    document.getElementById('live-temp').innerText = data.temperature + " °C";
+                    document.getElementById('live-hum').innerText = data.humidity + " %";
+                    document.getElementById('live-moist').innerText = data.moisture + " %";
+                    
+                    if (data.pump_action === 1) {
+                        resDiv.innerText = "🚿 SYSTEM STATUS: WATERING REQUIRED";
+                        resDiv.style.backgroundColor = "#c6f6d5";
+                        resDiv.style.color = "#22543d";
+                        resDiv.style.borderColor = "#9ae6b4";
+                    } else {
+                        resDiv.innerText = "✅ SYSTEM STATUS: NORMAL (No Water Needed)";
+                        resDiv.style.backgroundColor = "#e2e8f0";
+                        resDiv.style.color = "#1a202c";
+                        resDiv.style.borderColor = "#cbd5e0";
+                    }
+                } else {
+                    resDiv.innerText = "⏳ Waiting for Firebase logs...";
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('live-result').innerText = "❌ Error connecting to Python server!";
+                document.getElementById('live-result').style.backgroundColor = "#fed7d7";
+                document.getElementById('live-result').style.color = "#822727";
+            }
+        }
+
+        // --- MANUAL PREDICTION FUNCTION ---
+        async function askAI() {
+            let t = parseFloat(document.getElementById('temp').value);
+            let h = parseFloat(document.getElementById('hum').value);
+            let m = parseFloat(document.getElementById('moist').value);
+            
+            let resDiv = document.getElementById('manual-result');
+            resDiv.innerText = "Running AI logic...";
+            
+            try {
+                let response = await fetch('http://127.0.0.1:5000/manual-predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ temperature: t, humidity: h, moisture: m })
+                });
+                
+                let result = await response.json();
+                
+                if (result.status === 'success') {
+                    resDiv.innerText = "AI Decision: " + result.message;
+                    
+                    if (result.prediction === 1) {
+                        resDiv.style.backgroundColor = "#c6f6d5";
+                        resDiv.style.color = "#22543d";
+                        resDiv.style.borderColor = "#9ae6b4";
+                    } else {
+                        resDiv.style.backgroundColor = "#e2e8f0";
+                        resDiv.style.color = "#1a202c";
+                        resDiv.style.borderColor = "#cbd5e0";
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                resDiv.innerText = "❌ Error connecting to Python server!";
+                resDiv.style.backgroundColor = "#fed7d7";
+                resDiv.style.color = "#822727";
+            }
+        }
+    </script>
+</body>
+</html>
