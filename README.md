@@ -135,13 +135,9 @@ Through this project, the following concepts can be explored:
 - Project Repository: [Smart Irrigation System](https://github.com/Kunal7216-ninja/Smart-Irrigation-System)
 - LinkedIn: [Kunal Raj](https://www.linkedin.com/in/kunal-raj-38ba68317/)
 
-## 🤝 Contributions
 
-Suggestions and improvements are welcome. Feel free to fork the repository, experiment with enhancements, and submit a pull request.
 
-## 📄 License
 
-Add a suitable open-source license to the repository if you intend to permit others to reuse, modify, or distribute this project.
 
 ---
 
